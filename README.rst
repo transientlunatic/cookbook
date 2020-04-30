@@ -37,16 +37,13 @@ It may be helpful to keep most of the metadata at the top of the file, but `cook
 
 You can include things like the preparation time, or categories for the recipe this way.
 
-For example
-
-::
+For example ::
    [Cooking time] 18 hours
    [Preparation time] 3 minutes
 
 
 Example recipe
 ~~~~~~~~~~~~~~
-
 ::
    [Preparation time] 30 min
    [Cooking time] 30 min
