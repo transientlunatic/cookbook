@@ -45,6 +45,7 @@ For example
 
 Example recipe
 ~~~~~~~~~~~~~~
+Here's an example ``.recipe`` file for blondies.
 ::
    [Preparation time] 30 min
    [Cooking time] 30 min
