@@ -1,32 +1,71 @@
-import re
 import click
 
+from .components import Ingredients, Method, Metadata
 from . import units
 
+def find_recipe_file(name):
+    """
+    Search the recipes storage directory for a recipe which fits this name.
 
+    Parameters
+    ----------
+    name : str
+       The name of the recipe.
 
-recipe = "/home/daniel/notes/recipes/soda-bread.recipe"
+    Returns
+    -------
+    File
+    """
+    name = name.replace(" ", "-")
+    recipe = f"/home/daniel/notes/recipes/{name}.recipe"
 
-with open(recipe, "r") as f:
-    data = f.read()
+    return recipe
+
+def recipe_data(name):
+    """
+    Open a recipe file for a recipe with a given name.
+
+    """
+    
+    with open(find_recipe_file(name), "r") as recipe:
+        data = recipe.read()
+    return data
+    
+        
 
 @click.group()
 def cookbook():
     pass
 
 @cookbook.command()
-@click.argument("name")
-def recipe(name):
+@click.argument("name", nargs=-1)
+@click.option("--yield", "dyield")
+def recipe(name, dyield):
     """
     Display an entire recipe in the terminal
+
+    Parameters
+    ----------
+    dyield : str
+       The amount which the recipe should yield
     """
 
+    dyield = units.parse_units(dyield)
+    
+    name = "-".join(name)
+    data = recipe_data(name)
+
+    metadata = Metadata(data)
+    
     output = ""
 
     output += "Ingredients\n"
     output += "*"*len("ingredients")+"\n"
 
     ingredients = Ingredients(data)
+    # Rescale the ingredients for the desired yield
+    if "yield" in metadata:
+        ingredients.scale(metadata['yield'], dyield)
     method = Method(data)
     output += str(ingredients)
 
@@ -37,61 +76,10 @@ def recipe(name):
     print(output)
     
 
-def parse_units(line):
-    symbols = units.symbols
-
-    regexes = r"([\d\-\<\>\.]*)[\s]*" "(" + "|".join(list(symbols.keys())) + ")"
 
 
-    parse = re.match(regexes,  line)
-    if parse:
-        return(symbols[parse[2]](parse[1]))
-    else:
-        return line
-
-def parse_keyvals(data):
-    metadata = re.findall(r"\[([\w\s]*)\] (.*)\s*\n", data)
-    keyvals = {}
-    for m in metadata:
-        keyvals[m[0].lower()] = parse_units(m[1])
-    return keyvals
 
 
-class Ingredients(object):
-    def __init__(self, data):
-        self.ingredients = self.parse(data)
-        
-    def parse(self, data):
-        """
-        Parse a recipe file and discover any ingredients listed in it.
-        """
-        
-        regex = r"^([\w ]*)\b[\s]{3,}([\d\w\,\.]*)$"
-        ingredients = re.findall(regex, data, re.MULTILINE)
-        parsed = {}
-        for ingredient in ingredients:
-            parsed[ingredient[0]] = parse_units(ingredient[1])
-        return parsed
-
-    def __repr__(self):
-        output = ""
-        for ingredient, amount in self.ingredients.items():
-            output += f"{ingredient:35}   {amount}\n"
-        return output
-
-class Method(object):
-    def __init__(self, data):
-        """
-        """
-        self.method = self.parse(data)
-
-    def parse(self, data):
-        
-        regex = r"(?s)(?:^# Method)[\n]+(.*)(?:(?:\n#)|(?:\n\Z))"
-        return re.findall(regex, data.strip(), re.MULTILINE|re.DOTALL)[0]
-
-    def __repr__(self):
-        return self.method
         
 
 
